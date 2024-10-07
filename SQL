@@ -1,0 +1,39 @@
+--1. Shows all top 100 songs from January 1, 1985 through December 31, 1990.
+Select *
+FROM tutorial.billboard_top_100_year_end
+WHERE year BETWEEN 1985 AND 1990;
+
+--2. Returns all rows for songs that were on the charts in 2013 and do not contain the letter "a". 
+SELECT *
+FROM tutorial.billboard_top_100_year_end
+WHERE year = 2013
+AND song_name NOT LIKE 'a' 
+;
+-- 3. Shows all rows for which T-Pain was a group member, ordered by rank on the charts, from lowest to highest rank (from 100 to 1).
+SELECT *
+FROM tutorial.billboard_top_100_year_end
+WHERE artist = 'T-Pain'
+ORDER BY YEAR_RANK DESC;
+
+--Counts the number of companies acquired within 3 years, 5 years, and 10 years of being founded 
+--(in 3 separate columns). Include a column for total companies acquired as well. Group  by category and limit to only rows with a founding date. 
+--Use tutorial.crunchbase_companies_clean_date table and tutorial.crunchbase_acquisitions_clean_date table
+
+SELECT * FROM tutorial.crunchbase_companies_clean_date
+SELECT * FROM tutorial.crunchbase_acquisitions_clean_date
+
+SELECT
+    companies.category_code,
+    COUNT(CASE WHEN acquisitions.acquired_at_cleaned <= companies.founded_at_clean::timestamp + INTERVAL '3 years' THEN 1 ELSE NULL END) AS acquired_3_yrs,
+    COUNT(CASE WHEN acquisitions.acquired_at_cleaned <= companies.founded_at_clean::timestamp + INTERVAL '5 years' THEN 1 ELSE NULL END) AS acquired_5_yrs,
+    COUNT(CASE WHEN acquisitions.acquired_at_cleaned <= companies.founded_at_clean::timestamp + INTERVAL '10 years' THEN 1 ELSE NULL END) AS acquired_10_yrs,
+    COUNT(companies.category_code) AS total_companies
+FROM 
+    tutorial.crunchbase_companies_clean_date companies
+INNER JOIN 
+    tutorial.crunchbase_acquisitions_clean_date acquisitions
+    ON acquisitions.company_permalink = companies.permalink
+WHERE 
+    companies.founded_at_clean IS NOT NULL
+GROUP BY 1
+ORDER BY total_companies DESC;
